@@ -5,28 +5,51 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
+using MyJsonRestService.FaultException;
+using MyJsonRestService.Entity;
+using System.Web.Script.Serialization;
+using System.Net;
 
 namespace WcfService1
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
-    public class Service1 : IService1
+    public class Service : IService1
     {
-        public string GetData(int value)
+        [WebInvoke(Method = "GET", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, UriTemplate = "data/{input}")]
+        public string FilterData(string input)
         {
-            return string.Format("You entered: {0}", value);
-        }
+            JavaScriptSerializer javaScriptSerializer = new JavaScriptSerializer();
+            try
+            {
+                RootObject rootObject = javaScriptSerializer.Deserialize<RootObject>(input);
+                //return the ones with DRM enabled (drm: true) and at least one episode (episodeCount > 0).
 
-        public CompositeType GetDataUsingDataContract(CompositeType composite)
-        {
-            if (composite == null)
-            {
-                throw new ArgumentNullException("composite");
+                if (rootObject == null)
+                {
+                    throw new WebFaultException<InvalidJson>(new InvalidJson() { Error = "Could not decode request: JSON parsing failed" }, HttpStatusCode.BadRequest);
+                }
+                else
+                {
+                    List<Show> shows = new List<Show>();
+                    foreach (Payload payload in rootObject.payload)
+                    {
+                        if (payload.drm && payload.episodeCount > 0)
+                        {
+                            shows.Add(new Show()
+                            {
+                                showImage = payload.image.showImage,
+                                slug = payload.slug,
+                                title = payload.title
+                            });
+                        }
+                    }
+                    return javaScriptSerializer.Serialize(shows);
+                }
             }
-            if (composite.BoolValue)
+            catch (Exception ex)
             {
-                composite.StringValue += "Suffix";
+                throw new WebFaultException<InvalidJson>(new InvalidJson() { Error = "Could not decode request: JSON parsing failed" }, HttpStatusCode.BadRequest);
             }
-            return composite;
+            return javaScriptSerializer.Serialize(string.Empty);
         }
     }
 }

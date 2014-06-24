@@ -63,6 +63,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entity\Image.cs" />
+    <Compile Include="Entity\NextEpisode.cs" />
+    <Compile Include="Entity\Payload.cs" />
+    <Compile Include="Entity\RootObject.cs" />
+    <Compile Include="Entity\Season.cs" />
+    <Compile Include="Entity\Show.cs" />
+    <Compile Include="FaultException\InvalidJson.cs" />
     <Compile Include="Service1.svc.cs">
       <DependentUpon>Service1.svc</DependentUpon>
     </Compile>
